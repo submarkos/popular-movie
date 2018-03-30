@@ -1,5 +1,6 @@
 package com.udacity.dakosonogov.popularmovie;
 
+import android.content.Intent;
 import android.support.v4.app.LoaderManager;
 import android.content.Context;
 import android.support.v4.content.Loader;
@@ -8,6 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.udacity.dakosonogov.popularmovie.model.Movie;
 import com.udacity.dakosonogov.popularmovie.utils.JsonUtils;
@@ -36,6 +40,23 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.popular_movie_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
+            startActivity(startSettingsActivity);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     public Loader<List<Movie>> onCreateLoader(int id, Bundle args) {
