@@ -1,7 +1,12 @@
 package com.udacity.dakosonogov.popularmovie.utils;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
+
+import com.udacity.dakosonogov.popularmovie.R;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +26,6 @@ public class QueryUtils {
     private static final String API_PARAMETR = "5e5aeaef5752ee056d0b2cd9fe75ed73";
     private static final String TAG = "MyApp";
     private static final String MOVIE_PATH = "movie";
-
 
     public static String getHttpResponse(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -48,7 +52,10 @@ public class QueryUtils {
         }
     }
 
-    public static URL getMovies (String sortOfCollection){
+    public static URL getMovies (Context context){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String key = context.getResources().getString(R.string.pref_sort_key);
+        String sortOfCollection = sharedPreferences.getString(key,"");
         Uri movieUri = Uri.parse(MOVIES_URL).buildUpon()
                 .appendPath(MOVIE_PATH)
                 .appendPath(sortOfCollection)
@@ -64,5 +71,7 @@ public class QueryUtils {
             return null;
         }
     }
-
 }
+
+
+

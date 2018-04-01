@@ -1,12 +1,14 @@
 package com.udacity.dakosonogov.popularmovie;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v4.app.LoaderManager;
 import android.content.Context;
 import android.support.v4.content.Loader;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
@@ -22,17 +24,17 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Movie>>{
 
-    private static final String POPULAR = "popular";
-    private static final String TOP_RATED = "top_rated";
-    private RecyclerView mRecyclerView;
+
     private MovieAdapter movieAdapter;
-    private final int LOADER_ID = 564;
+    private final int LOADER_ID = 123;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
+        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(gridLayoutManager);
         movieAdapter = new MovieAdapter(this);
@@ -83,11 +85,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
          FetchAsyncTask(Context context) {
             super(context);
         }
-        List<Movie> mMovies = null;
         @Override
         public List<Movie> loadInBackground() {
             try {
-                String response = QueryUtils.getHttpResponse(QueryUtils.getMovies(POPULAR));
+                String response = QueryUtils.getHttpResponse(QueryUtils.getMovies(getContext()));
                 return JsonUtils.getAllMovies(response);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -100,4 +101,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             forceLoad();
         }
     }
+
+
 }
