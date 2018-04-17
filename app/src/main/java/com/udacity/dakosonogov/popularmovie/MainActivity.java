@@ -1,14 +1,12 @@
 package com.udacity.dakosonogov.popularmovie;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.support.v4.app.LoaderManager;
 import android.content.Context;
 import android.support.v4.content.Loader;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
@@ -19,14 +17,16 @@ import com.udacity.dakosonogov.popularmovie.model.Movie;
 import com.udacity.dakosonogov.popularmovie.utils.JsonUtils;
 import com.udacity.dakosonogov.popularmovie.utils.QueryUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Movie>>{
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Movie>>, MovieAdapter.MovieAdapterListener{
 
 
     private MovieAdapter movieAdapter;
     private final int LOADER_ID = 123;
+    public List<Movie> movies = new ArrayList<>();
 
 
     @Override
@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(gridLayoutManager);
-        movieAdapter = new MovieAdapter(this);
+        movieAdapter = new MovieAdapter(this, this);
         mRecyclerView.setAdapter(movieAdapter);
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
     }
@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public void onLoadFinished(Loader<List<Movie>> loader, List<Movie> data) {
         movieAdapter.setFilms(data);
+        movies = data;
     }
 
 
@@ -81,6 +82,20 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public void onLoaderReset(Loader loader) {
         movieAdapter.setFilms(null);
     }
+
+    @Override
+    public void onClick(int clickedMovieIndex) {
+        Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+        Movie clickedMovie = movies.get(clickedMovieIndex);
+        intent.putExtra("image", clickedMovie.getImage());
+        intent.putExtra("title", clickedMovie.getTitle());
+        intent.putExtra("release_date", clickedMovie.getReleaseDate());
+        intent.putExtra("overview", clickedMovie.getOverview());
+        intent.putExtra("vote", clickedMovie.getVote());
+        startActivity(intent);
+
+    }
+
     private static class FetchAsyncTask extends AsyncTaskLoader<List<Movie>> {
          FetchAsyncTask(Context context) {
             super(context);
@@ -101,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             forceLoad();
         }
     }
+
 
 
 }

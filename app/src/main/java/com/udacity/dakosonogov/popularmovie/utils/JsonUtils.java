@@ -19,6 +19,10 @@ import java.util.List;
 public class JsonUtils {
     private static final String RESULTS = "results";
     private static final String POSTER= "poster_path";
+    private static final String OVERVIEW = "overview";
+    private static final String TITLE ="title";
+    private static final String RELEASE_DATE = "release_date";
+    private static final String VOTE = "vote_average";
     private static final String IMAGE_BASE_URL = "http://image.tmdb.org/t/p";
     private static final String SIZE = "w500";
     private static final String TAG = "MyApp";
@@ -32,8 +36,12 @@ public class JsonUtils {
             for (int i = 0; i < numberOfMovies; i++) {
                 JSONObject jsonMovie = allMoviesJSON.getJSONObject(i);
                 String moviePoster = jsonMovie.getString(POSTER);
+                String movieOverview = jsonMovie.getString(OVERVIEW);
+                String movieTitle = jsonMovie.getString(TITLE);
+                String movieReleaseDate = jsonMovie.getString(RELEASE_DATE);
+                String movieVote = jsonMovie.getString(VOTE);
                 String moviePosterPath = new StringBuilder(moviePoster).deleteCharAt(0).toString();
-                Movie movie = new Movie(fullImageUrl(moviePosterPath));
+                Movie movie = new Movie(fullImageUrl(moviePosterPath), movieTitle, movieOverview,movieReleaseDate,movieVote);
                 movies.add(movie);
 
                 Log.v(TAG,movie.getImage());

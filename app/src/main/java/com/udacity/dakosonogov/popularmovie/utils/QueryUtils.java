@@ -23,7 +23,7 @@ public class QueryUtils {
 
     private static final String MOVIES_URL = "https://api.themoviedb.org/3";
     private static final String API_KEY = "api_key";
-    private static final String API_PARAMETR = "5e5aeaef5752ee056d0b2cd9fe75ed73";
+    private static final String API_PARAMETR = "";
     private static final String TAG = "MyApp";
     private static final String MOVIE_PATH = "movie";
 
