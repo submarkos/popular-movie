@@ -1,4 +1,4 @@
-package com.udacity.dakosonogov.popularmovie;
+package com.udacity.dakosonogov.popularmovie.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.GridLayoutManager;
@@ -9,7 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
-import com.udacity.dakosonogov.popularmovie.model.Movie;
+import com.udacity.dakosonogov.popularmovie.R;
+import com.udacity.dakosonogov.popularmovie.model.MovieItem;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder> {
 
-    private List<Movie> movies;
+    private List<MovieItem> mMovies;
     private final Context mContext;
     private MovieAdapterListener mMovieAdapterListener;
 
@@ -27,8 +28,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         void onClick (int clickedMovieIndex);
     }
 
-    MovieAdapter(Context mContext, MovieAdapterListener movieAdapterListener) {
+    public MovieAdapter(Context mContext, List<MovieItem> movies, MovieAdapterListener movieAdapterListener) {
         this.mContext = mContext;
+        mMovies = movies;
         mMovieAdapterListener = movieAdapterListener;
 
     }
@@ -48,20 +50,20 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
 
     @Override
     public void onBindViewHolder(MovieAdapterViewHolder holder, int position) {
-        Movie movie = movies.get(position);
+        MovieItem movieItem = mMovies.get(position);
                 Picasso.with(mContext)
-                .load(movie.getImage())
+                .load(movieItem.getPosterPath())
                 .into(holder.mPoster);
     }
 
     @Override
     public int getItemCount() {
-        if (movies==null) return 0;
-        else return movies.size();
+        if (mMovies==null) return 0;
+        else return mMovies.size();
     }
 
-    void setFilms(List<Movie> allMovies){
-        movies = allMovies;
+    void setFilms(List<MovieItem> allMovies){
+        mMovies = allMovies;
         notifyDataSetChanged();
     }
 

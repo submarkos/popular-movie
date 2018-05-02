@@ -1,45 +1,47 @@
 package com.udacity.dakosonogov.popularmovie;
 
 import android.content.Intent;
-import android.support.v4.app.LoaderManager;
-import android.content.Context;
-import android.support.v4.content.Loader;
-import android.support.v4.content.AsyncTaskLoader;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
-import com.udacity.dakosonogov.popularmovie.model.Movie;
-import com.udacity.dakosonogov.popularmovie.utils.JsonUtils;
-import com.udacity.dakosonogov.popularmovie.utils.QueryUtils;
+import com.udacity.dakosonogov.popularmovie.adapter.MovieAdapter;
+import com.udacity.dakosonogov.popularmovie.api.API;
+import com.udacity.dakosonogov.popularmovie.api.RestClient;
+import com.udacity.dakosonogov.popularmovie.model.AllMovies;
 
-import java.util.ArrayList;
+import com.udacity.dakosonogov.popularmovie.model.MovieItem;
+
+
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Movie>>, MovieAdapter.MovieAdapterListener{
+
+public class MainActivity extends AppCompatActivity implements  MovieAdapter.MovieAdapterListener, SharedPreferences.OnSharedPreferenceChangeListener{
 
 
-    private MovieAdapter movieAdapter;
-    private final int LOADER_ID = 123;
-    public List<Movie> movies = new ArrayList<>();
 
+    private RecyclerView mRecyclerView;
+    private List<MovieItem> movies = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
+        mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(gridLayoutManager);
-        movieAdapter = new MovieAdapter(this, this);
-        mRecyclerView.setAdapter(movieAdapter);
-        getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+        getSortingBy( );
     }
 
     @Override
@@ -61,62 +63,75 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
-    public Loader<List<Movie>> onCreateLoader(int id, Bundle args) {
-        switch (id) {
-            case LOADER_ID:
-                return new FetchAsyncTask(this);
-
-        }
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<List<Movie>> loader, List<Movie> data) {
-        movieAdapter.setFilms(data);
-        movies = data;
-    }
-
-
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        movieAdapter.setFilms(null);
-    }
-
-    @Override
     public void onClick(int clickedMovieIndex) {
         Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-        Movie clickedMovie = movies.get(clickedMovieIndex);
-        intent.putExtra("image", clickedMovie.getImage());
+        MovieItem clickedMovie = movies.get(clickedMovieIndex);
+        intent.putExtra("image", clickedMovie.getPosterPath());
         intent.putExtra("title", clickedMovie.getTitle());
         intent.putExtra("release_date", clickedMovie.getReleaseDate());
         intent.putExtra("overview", clickedMovie.getOverview());
-        intent.putExtra("vote", clickedMovie.getVote());
+        intent.putExtra("vote", clickedMovie.getVoteAverage());
         startActivity(intent);
 
     }
 
-    private static class FetchAsyncTask extends AsyncTaskLoader<List<Movie>> {
-         FetchAsyncTask(Context context) {
-            super(context);
-        }
-        @Override
-        public List<Movie> loadInBackground() {
-            try {
-                String response = QueryUtils.getHttpResponse(QueryUtils.getMovies(getContext()));
-                return JsonUtils.getAllMovies(response);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
+    private void getPopularMovies() {
+        RestClient restClient = new RestClient();
+        API api =
+                restClient.getClient().create(API.class);
+        Call<AllMovies> call = api.getPopular(BuildConfig.MOVIE_DB_TOKEN);
+        call.enqueue(new Callback<AllMovies>() {
+            @Override
+            public void onResponse(Call<AllMovies> call, Response<AllMovies> response) {
+                List<MovieItem> movieItems = response.body().getResults();
+                movies = movieItems;
+                mRecyclerView.setAdapter(new MovieAdapter(getApplicationContext(), movieItems, MainActivity.this));
             }
-        }
 
-        @Override
-        protected void onStartLoading() {
-            forceLoad();
-        }
+            @Override
+            public void onFailure(Call<AllMovies> call, Throwable t) {
+            t.printStackTrace();
+            }
+        });
     }
 
+    private void getTopRatedMovies() {
+        RestClient restClient = new RestClient();
+        API api =
+                restClient.getClient().create(API.class);
+        Call<AllMovies> call = api.getTopRated(BuildConfig.MOVIE_DB_TOKEN);
+        call.enqueue(new Callback<AllMovies>() {
+            @Override
+            public void onResponse(Call<AllMovies> call, Response<AllMovies> response) {
+                List<MovieItem> movieItems = response.body().getResults();
+                movies = movieItems;
+                mRecyclerView.setAdapter(new MovieAdapter(getApplicationContext(), movieItems, MainActivity.this));
+            }
 
+            @Override
+            public void onFailure(Call<AllMovies> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+    }
 
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        getSortingBy();
+    }
+
+    private void getSortingBy() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String key = this.getString(R.string.pref_sort_key);
+        String sortOfCollection = sharedPreferences.getString(key,"");
+        if (sortOfCollection.equals(this.getString(R.string.pref_sort_popular))) {
+            getPopularMovies();
+        } else getTopRatedMovies();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getSortingBy();
+    }
 }
