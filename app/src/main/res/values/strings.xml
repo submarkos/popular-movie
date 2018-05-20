@@ -7,4 +7,9 @@
     <string name="pref_sort_top">top_rated</string>
     <string name="pref_sort_label_popular">Popular</string>
     <string name="pref_sort_label_top_rated">Top rated</string>
+    <string name="pref_sort_favorite">favorite</string>
+    <string name="pref_sort_label_favorite">Favorite</string>
+    <string name="movie_details">Movie Details</string>
+    <string name="trailers">Trailers</string>
+    <string name="reviews">Reviews</string>
 </resources>

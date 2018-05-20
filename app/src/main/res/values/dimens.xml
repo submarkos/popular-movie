@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="minimal_margin">8dp</dimen>
+    <dimen name="background_height">100dp</dimen>
+    <dimen name="medium_margin">16dp</dimen>
+    <dimen name="poster_detail_width">132dp</dimen>
+    <dimen name="poster_detail_height">194dp</dimen>
+    <dimen name="maximum_margin">36dp</dimen>
+    <dimen name="detail_text_size">10dp</dimen>
+    <dimen name="icon_dimension">44dp</dimen>
+</resources>

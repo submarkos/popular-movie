@@ -2,6 +2,8 @@ package com.udacity.dakosonogov.popularmovie;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
@@ -14,6 +16,7 @@ import android.view.MenuItem;
 import com.udacity.dakosonogov.popularmovie.adapter.MovieAdapter;
 import com.udacity.dakosonogov.popularmovie.api.API;
 import com.udacity.dakosonogov.popularmovie.api.RestClient;
+import com.udacity.dakosonogov.popularmovie.data.MovieDBHelper;
 import com.udacity.dakosonogov.popularmovie.model.AllMovies;
 
 import com.udacity.dakosonogov.popularmovie.model.MovieItem;
@@ -31,13 +34,18 @@ public class MainActivity extends AppCompatActivity implements  MovieAdapter.Mov
 
 
     private RecyclerView mRecyclerView;
-    private List<MovieItem> movies = null;
+    private List<MovieItem> mMovies = null;
+    private MovieAdapter mAdapter;
+    private MovieDBHelper mMovieDBHelper;
+    private SQLiteDatabase mDb;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        mMovieDBHelper = new MovieDBHelper(this);
+        mDb = mMovieDBHelper.getWritableDatabase();
         mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(gridLayoutManager);
@@ -65,12 +73,8 @@ public class MainActivity extends AppCompatActivity implements  MovieAdapter.Mov
     @Override
     public void onClick(int clickedMovieIndex) {
         Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-        MovieItem clickedMovie = movies.get(clickedMovieIndex);
-        intent.putExtra("image", clickedMovie.getPosterPath());
-        intent.putExtra("title", clickedMovie.getTitle());
-        intent.putExtra("release_date", clickedMovie.getReleaseDate());
-        intent.putExtra("overview", clickedMovie.getOverview());
-        intent.putExtra("vote", clickedMovie.getVoteAverage());
+        MovieItem clickedMovie = mMovies.get(clickedMovieIndex);
+        intent.putExtra("clicked movie", clickedMovie);
         startActivity(intent);
 
     }
@@ -84,8 +88,10 @@ public class MainActivity extends AppCompatActivity implements  MovieAdapter.Mov
             @Override
             public void onResponse(Call<AllMovies> call, Response<AllMovies> response) {
                 List<MovieItem> movieItems = response.body().getResults();
-                movies = movieItems;
-                mRecyclerView.setAdapter(new MovieAdapter(getApplicationContext(), movieItems, MainActivity.this));
+                mMovies = movieItems;
+                mAdapter = new MovieAdapter(getApplicationContext(), movieItems, MainActivity.this);
+                mAdapter.notifyDataSetChanged();
+                mRecyclerView.setAdapter(mAdapter);;
             }
 
             @Override
@@ -104,8 +110,10 @@ public class MainActivity extends AppCompatActivity implements  MovieAdapter.Mov
             @Override
             public void onResponse(Call<AllMovies> call, Response<AllMovies> response) {
                 List<MovieItem> movieItems = response.body().getResults();
-                movies = movieItems;
-                mRecyclerView.setAdapter(new MovieAdapter(getApplicationContext(), movieItems, MainActivity.this));
+                mMovies = movieItems;
+                mAdapter = new MovieAdapter(getApplicationContext(), movieItems, MainActivity.this);
+                mAdapter.notifyDataSetChanged();
+                mRecyclerView.setAdapter(mAdapter);
             }
 
             @Override
@@ -126,12 +134,31 @@ public class MainActivity extends AppCompatActivity implements  MovieAdapter.Mov
         String sortOfCollection = sharedPreferences.getString(key,"");
         if (sortOfCollection.equals(this.getString(R.string.pref_sort_popular))) {
             getPopularMovies();
-        } else getTopRatedMovies();
+        } else if (sortOfCollection.equals(getString(R.string.pref_sort_top))) {
+            getTopRatedMovies();
+        } else if (sortOfCollection.equals(getString(R.string.pref_sort_favorite))) {
+            getFavorites();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         getSortingBy();
+    }
+    private void getFavorites(){
+       runOnUiThread(new Runnable() {
+           @Override
+           public void run() {
+               mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
+               GridLayoutManager gridLayoutManager = new GridLayoutManager(MainActivity.this, 2, GridLayoutManager.VERTICAL, false);
+               mRecyclerView.setLayoutManager(gridLayoutManager);
+               mMovies = mMovieDBHelper.getFavouriteMovies(mDb);
+               mAdapter = new MovieAdapter(getApplicationContext(),mMovies, MainActivity.this);
+               mAdapter.notifyDataSetChanged();
+               mRecyclerView.setAdapter(mAdapter);
+
+           }
+       });
     }
 }
