@@ -73,17 +73,14 @@ public class MovieDBHelper extends SQLiteOpenHelper {
                 new String[]{movieItem.getId()}
         );
     }
-    public List<MovieItem> getFavouriteMovies(SQLiteDatabase db) {
+    public List<MovieItem> getFavouriteMovies() {
 
-        String sortOrder = MovieContract.MovieEntry._ID;
         List<MovieItem> favoriteMovies = new ArrayList<>();
-        Cursor cursor = db.query(MovieContract.MovieEntry.TABLE_NAME,
+        Cursor cursor = this.context.getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI,
                 null,
                 null,
                 null,
-                null,
-                null,
-                 null);
+                null);
         cursor.moveToFirst();
         for(int i = 0; i < cursor.getCount(); i++){
             cursor.moveToPosition(i);
@@ -97,5 +94,6 @@ public class MovieDBHelper extends SQLiteOpenHelper {
             favoriteMovies.add(movieItem);
         }
         return favoriteMovies;
+
     }
 }

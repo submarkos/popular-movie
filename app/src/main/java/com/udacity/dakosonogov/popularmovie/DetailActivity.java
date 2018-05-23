@@ -12,6 +12,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.github.ivbaranov.mfb.MaterialFavoriteButton;
@@ -36,6 +37,9 @@ import retrofit2.Response;
 
 public class DetailActivity extends AppCompatActivity {
 
+    private static final String TRAILERS_STATE = "trailers state";
+    private static final String REVIEWS_STATE = "reviews state";
+    private static final String SCROLL_POSITION = "scroll position";
     private ImageView mPoster;
     private TextView mTitle;
     private TextView mReleaseDate;
@@ -49,6 +53,7 @@ public class DetailActivity extends AppCompatActivity {
     private ReviewAdapter mReviewAdapter;
     private List<Review> mReviews;
     private MovieDBHelper mMovieDBHelper;
+    private ScrollView mScrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +72,7 @@ public class DetailActivity extends AppCompatActivity {
         mRating = (TextView)findViewById(R.id.detailRating);
         mOverview = (TextView)findViewById(R.id.detailOverview);
         mMovieDBHelper = new MovieDBHelper(DetailActivity.this);
+        mScrollView =(ScrollView)findViewById(R.id.detailScrollView);
         final MovieItem clickedMovie = getIntent().getParcelableExtra("clicked movie");
         boolean isAlreadySaved = mMovieDBHelper.isMovieFavourite(clickedMovie.getId());
         MaterialFavoriteButton favoriteButton = (MaterialFavoriteButton) findViewById(R.id.markAsFavoritButton);
@@ -96,22 +102,30 @@ public class DetailActivity extends AppCompatActivity {
         mOverview.setText(clickedMovie.getOverview());
         mMovieId = clickedMovie.getId();
 
+        initReviews();
+
+        initTrailers();
+    }
+
+    private void initTrailers() {
         mTrailers = new ArrayList<>();
-        mTrailerAdapter = new TrailerAdapter(this, mTrailers);
+        mTrailerAdapter = new TrailerAdapter(DetailActivity.this, mTrailers);
         mRvTrailers = findViewById(R.id.trailersRecyclerView);
-        mRvTrailers.setLayoutManager(new LinearLayoutManager(this));
+        mRvTrailers.setLayoutManager(new LinearLayoutManager(DetailActivity.this));
         DividerItemDecoration itemDecor = new DividerItemDecoration(mRvTrailers.getContext(), DividerItemDecoration.VERTICAL);
         mRvTrailers.addItemDecoration(itemDecor);
         mRvTrailers.setAdapter(mTrailerAdapter);
+        getTrailersFromJson();
+    }
 
+    private void initReviews() {
         mReviews = new ArrayList<>();
-        mReviewAdapter = new ReviewAdapter(this, mReviews);
+        mReviewAdapter = new ReviewAdapter(DetailActivity.this, mReviews);
         mRvReviews = findViewById(R.id.reviewsRecyclerView);
         mRvReviews.setLayoutManager(new LinearLayoutManager(this));
+        DividerItemDecoration itemDecor = new DividerItemDecoration(mRvReviews.getContext(), DividerItemDecoration.VERTICAL);
         mRvReviews.addItemDecoration(itemDecor);
         mRvReviews.setAdapter(mReviewAdapter);
-
-        getTrailersFromJson();
         getReviewsFromJson();
     }
 
@@ -150,5 +164,28 @@ public class DetailActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(TRAILERS_STATE,mRvTrailers.getLayoutManager().onSaveInstanceState());
+        outState.putParcelable(REVIEWS_STATE, mRvReviews.getLayoutManager().onSaveInstanceState());
+        outState.putIntArray(SCROLL_POSITION, new int[] { mScrollView.getScrollX(), mScrollView.getScrollY()});
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mRvTrailers.getLayoutManager().onRestoreInstanceState(savedInstanceState.getParcelable(TRAILERS_STATE));
+        mRvReviews.getLayoutManager().onRestoreInstanceState(savedInstanceState.getParcelable(REVIEWS_STATE));
+        final int[] position = savedInstanceState.getIntArray(SCROLL_POSITION);
+        if(position != null)
+            mScrollView.post(new Runnable() {
+                public void run() {
+                    mScrollView.scrollTo(position[0], position[1]);
+                }
+            });
+
     }
 }

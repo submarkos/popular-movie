@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
@@ -32,12 +33,12 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity implements  MovieAdapter.MovieAdapterListener, SharedPreferences.OnSharedPreferenceChangeListener{
 
 
-
+    private static final String LAYOUT_STATE = "layout state";
     private RecyclerView mRecyclerView;
     private List<MovieItem> mMovies = null;
     private MovieAdapter mAdapter;
     private MovieDBHelper mMovieDBHelper;
-    private SQLiteDatabase mDb;
+    private GridLayoutManager gridLayoutManager;
 
 
     @Override
@@ -45,11 +46,12 @@ public class MainActivity extends AppCompatActivity implements  MovieAdapter.Mov
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mMovieDBHelper = new MovieDBHelper(this);
-        mDb = mMovieDBHelper.getWritableDatabase();
         mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
+        gridLayoutManager = new GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(gridLayoutManager);
-        getSortingBy( );
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        getSortingBy();
     }
 
     @Override
@@ -141,24 +143,35 @@ public class MainActivity extends AppCompatActivity implements  MovieAdapter.Mov
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        getSortingBy();
-    }
     private void getFavorites(){
        runOnUiThread(new Runnable() {
            @Override
            public void run() {
-               mRecyclerView = (RecyclerView) findViewById(R.id.rvMovies);
-               GridLayoutManager gridLayoutManager = new GridLayoutManager(MainActivity.this, 2, GridLayoutManager.VERTICAL, false);
-               mRecyclerView.setLayoutManager(gridLayoutManager);
-               mMovies = mMovieDBHelper.getFavouriteMovies(mDb);
+               mMovies = mMovieDBHelper.getFavouriteMovies();
                mAdapter = new MovieAdapter(getApplicationContext(),mMovies, MainActivity.this);
                mAdapter.notifyDataSetChanged();
                mRecyclerView.setAdapter(mAdapter);
 
            }
        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(LAYOUT_STATE,gridLayoutManager.onSaveInstanceState());
+
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        gridLayoutManager.onRestoreInstanceState(savedInstanceState.getParcelable(LAYOUT_STATE));
     }
 }
